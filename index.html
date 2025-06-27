@@ -99,9 +99,13 @@
     <div class="search-bar">
         <select id="keywordSelect">
             <option value="">키워드 선택...</option>
+            <option value="기술">기술</option>
+            <option value="창업">창업</option>
+            <option value="지원">지원</option>
         </select>
     </div>
     <div class="announcement-list-wrapper">
+        <div id="previewList"></div>
         <ul class="announcement-list" id="announcementList">
             <!-- 공고 리스트가 여기에 표시됩니다 -->
         </ul>
@@ -175,27 +179,41 @@
 
         function renderList(announcements, filter = "") {
             const list = document.getElementById('announcementList');
+            const preview = document.getElementById('previewList');
             list.innerHTML = "";
+            preview.innerHTML = "";
             let activeCount = 0;
-            announcements
+            const filtered = announcements
                 .filter(a =>
                     filter === "" ||
                     a.title.includes(filter) ||
                     a.keywords.some(k => k.includes(filter))
                 )
-                .sort((a, b) => b.date.localeCompare(a.date))
-                .forEach(a => {
-                    if (a.status === "지원중") activeCount++;
-                    const li = document.createElement('li');
-                    li.className = "announcement";
-                    li.innerHTML = `
-                        <span class="status">${a.status}</span>
-                        <div class="title">${a.title}</div>
-                        <div class="date">${a.date}</div>
-                        <div class="keywords">키워드: ${a.keywords.join(", ")}</div>
-                    `;
-                    list.appendChild(li);
-                });
+                .sort((a, b) => b.date.localeCompare(a.date));
+            // 최신 공고 2~3개 미리보기
+            const previewItems = filtered.slice(0, 3);
+            if (previewItems.length > 0) {
+                preview.innerHTML = '<div style="margin-bottom:12px;font-weight:bold;">최신 공고 미리보기</div>' +
+                    previewItems.map(a =>
+                        `<div style="background:#f3f6fa;padding:10px 12px;border-radius:6px;margin-bottom:8px;">
+                            <span class="status">${a.status}</span>
+                            <span style="font-weight:bold;">${a.title}</span>
+                            <span style="color:#888;font-size:0.95em;"> (${a.date})</span>
+                        </div>`
+                    ).join("");
+            }
+            filtered.forEach(a => {
+                if (a.status === "지원중") activeCount++;
+                const li = document.createElement('li');
+                li.className = "announcement";
+                li.innerHTML = `
+                    <span class="status">${a.status}</span>
+                    <div class="title">${a.title}</div>
+                    <div class="date">${a.date}</div>
+                    <div class="keywords">키워드: ${a.keywords.join(", ")}</div>
+                `;
+                list.appendChild(li);
+            });
             document.getElementById('activeCount').textContent = activeCount;
         }
 

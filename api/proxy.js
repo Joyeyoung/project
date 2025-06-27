@@ -22,6 +22,7 @@ module.exports = async (req, res) => {
   // 선택 파라미터: startDate, endDate
   const searchParams = new URLSearchParams();
   searchParams.append('serviceKey', serviceKey);
+  searchParams.append('returnType', 'XML');
   if (params.get('pageNo')) searchParams.append('pageNo', params.get('pageNo'));
   if (params.get('numOfRows')) searchParams.append('numOfRows', params.get('numOfRows'));
   if (params.get('startDate')) searchParams.append('startDate', params.get('startDate'));
