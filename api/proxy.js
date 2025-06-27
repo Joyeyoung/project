@@ -33,7 +33,14 @@ module.exports = async (req, res) => {
   try {
     const apiRes = await fetch(url);
     const data = await apiRes.text();
-    res.status(200).send(data);
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(data, "text/xml");
+    const items = xmlDoc.getElementsByTagName('item');
+    if (items.length === 0) {
+      res.status(200).json({ error: 'No data found', detail: '조건에 맞는 데이터가 없습니다.' });
+    } else {
+      res.status(200).send(data);
+    }
   } catch (e) {
     res.status(500).json({ error: 'API fetch failed', detail: e.message });
   }
