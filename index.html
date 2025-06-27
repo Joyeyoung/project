@@ -134,7 +134,7 @@
                     return;
                 }
                 // 명세에 맞는 JSON 구조 파싱
-                const items = result.body?.items?.item;
+                const items = result.response?.body?.items?.item;
                 let announcements = [];
                 if (Array.isArray(items)) {
                     announcements = items;
