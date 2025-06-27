@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const xml2js = require('xml2js');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,15 +34,17 @@ module.exports = async (req, res) => {
   try {
     const apiRes = await fetch(url);
     const data = await apiRes.text();
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(data, "text/xml");
-    const items = xmlDoc.getElementsByTagName('item');
-    if (items.length === 0) {
-      res.status(200).json({ error: 'No data found', detail: '조건에 맞는 데이터가 없습니다.' });
-    } else {
-      res.status(200).send(data);
-    }
+    // XML을 JSON으로 변환
+    const parser = new xml2js.Parser({ explicitArray: false });
+    parser.parseString(data, (err, result) => {
+      if (err) {
+        res.status(500).json({ error: 'XML parsing failed', detail: err.message });
+      } else {
+        res.status(200).json(result);
+      }
+    });
   } catch (e) {
     res.status(500).json({ error: 'API fetch failed', detail: e.message });
   }
-}; 
+};
+// xml2js가 설치되어 있지 않으면, npm install xml2js 명령어로 설치하세요. 
