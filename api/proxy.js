@@ -14,8 +14,8 @@ module.exports = async (req, res) => {
   const urlObj = new URL(req.url, `http://${req.headers.host}`);
   const params = urlObj.searchParams;
 
-  // K-Startup 사업공고 오픈API 엔드포인트
-  const apiUrl = 'https://openapi.kised.or.kr/openapi/service/rest/ContentsService/getAnnouncementList';
+  // 엔드포인트를 mssBizService_v2로 변경
+  const apiUrl = 'https://apis.data.go.kr/1421000/mssBizService_v2/getMssBizList';
 
   const serviceKey = process.env.serviceKey;
   // 필수 파라미터: serviceKey, pageNo, numOfRows
