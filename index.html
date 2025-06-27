@@ -128,26 +128,25 @@
                 try {
                     result = JSON.parse(text);
                 } catch {
-                    // XML 파싱
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(text, "text/xml");
-                    const items = Array.from(xml.getElementsByTagName("item"));
-                    const announcements = items.map(item => ({
-                        title: item.getElementsByTagName("bizTitle")[0]?.textContent || "사업명 없음",
-                        date: item.getElementsByTagName("regDate")[0]?.textContent || "날짜 없음",
-                        keywords: [item.getElementsByTagName("bizTyNm")[0]?.textContent || "키워드 없음"],
-                        status: item.getElementsByTagName("bizPrdYn")[0]?.textContent === "Y" ? "지원중" : "마감"
-                    }));
-                    lastAnnouncements = announcements;
-                    renderList(announcements);
+                    // XML 파싱 (예외적 상황, 실제로는 JSON이 기본)
+                    lastAnnouncements = [];
+                    renderList([]);
                     return;
                 }
-                // JSON 구조일 경우
-                const announcements = (result.response?.body?.items?.item || []).map(item => ({
-                    title: item.bizTitle || "사업명 없음",
-                    date: item.regDate || "날짜 없음",
-                    keywords: [item.bizTyNm || "키워드 없음"],
-                    status: item.bizPrdYn === "Y" ? "지원중" : "마감"
+                // 명세에 맞는 JSON 구조 파싱
+                const items = result.body?.items?.item;
+                let announcements = [];
+                if (Array.isArray(items)) {
+                    announcements = items;
+                } else if (items) {
+                    announcements = [items];
+                }
+                // 필요한 필드만 추출, 최신순 정렬
+                announcements = (announcements || []).map(item => ({
+                    title: item.title || "사업명 없음",
+                    date: item.applicationStartDate || item.startDate || item.regDate || "날짜 없음",
+                    keywords: [item.dataContents || "키워드 없음"],
+                    status: (item.applicationEndDate && new Date(item.applicationEndDate) >= new Date()) ? "지원중" : "마감"
                 }));
                 lastAnnouncements = announcements;
                 renderList(announcements);

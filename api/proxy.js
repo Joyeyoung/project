@@ -14,8 +14,8 @@ module.exports = async (req, res) => {
   const urlObj = new URL(req.url, `http://${req.headers.host}`);
   const params = urlObj.searchParams;
 
-  // 엔드포인트를 mssBizService_v2로 변경
-  const apiUrl = 'https://apis.data.go.kr/1421000/mssBizService_v2/getMssBizList';
+  // 엔드포인트를 getbizList_v2로 변경
+  const apiUrl = 'https://apis.data.go.kr/1421000/mssBizService_v2/getbizList_v2';
 
   const serviceKey = process.env.serviceKey;
   // 필수 파라미터: serviceKey, pageNo, numOfRows
