@@ -74,6 +74,13 @@
             padding: 6px;
             margin-right: 8px;
         }
+        .announcement-list-wrapper {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 24px 18px 8px 18px;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 
@@ -90,15 +97,20 @@
         <button id="searchBtn">검색</button>
     </div>
     <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="키워드로 검색...">
+        <select id="keywordSelect">
+            <option value="">키워드 선택...</option>
+        </select>
     </div>
-    <ul class="announcement-list" id="announcementList">
-        <!-- 공고 리스트가 여기에 표시됩니다 -->
-    </ul>
+    <div class="announcement-list-wrapper">
+        <ul class="announcement-list" id="announcementList">
+            <!-- 공고 리스트가 여기에 표시됩니다 -->
+        </ul>
+    </div>
     <script>
         // 실제 사업공고 API 엔드포인트와 파라미터 사용
         const serviceKey = "olU5ff1OOtLxN2UCnd5tVK1UbLMMdvEsDGnkwLhtnCLbUuwdRSnPdLeAJeBmR7j7SBGavmXKq9da+/y+x9wa3w==";
         let lastAnnouncements = [];
+        let lastKeywords = [];
 
         async function fetchAnnouncements(filter = "") {
             const pageNo = document.getElementById('pageNo').value || "1";
@@ -114,6 +126,7 @@
             try {
                 const response = await fetch(apiUrl);
                 const text = await response.text();
+                console.log(text); // 응답 원본을 콘솔에 출력
                 // API가 XML로 응답할 수 있으므로 JSON 변환 시도, 실패하면 XML 파싱
                 let result;
                 try {
@@ -130,6 +143,7 @@
                         status: item.getElementsByTagName("bizPrdYn")[0]?.textContent === "Y" ? "지원중" : "마감"
                     }));
                     lastAnnouncements = announcements;
+                    updateKeywordSelect(announcements);
                     renderList(announcements, filter);
                     return;
                 }
@@ -143,11 +157,20 @@
                 }));
 
                 lastAnnouncements = announcements;
+                updateKeywordSelect(announcements);
                 renderList(announcements, filter);
             } catch (e) {
                 document.getElementById('announcementList').innerHTML = "<li>데이터를 불러오지 못했습니다.</li>";
                 document.getElementById('activeCount').textContent = 0;
             }
+        }
+
+        function updateKeywordSelect(announcements) {
+            const select = document.getElementById('keywordSelect');
+            const keywords = Array.from(new Set(announcements.flatMap(a => a.keywords)));
+            lastKeywords = keywords;
+            select.innerHTML = '<option value="">키워드 선택...</option>' +
+                keywords.map(k => `<option value="${k}">${k}</option>`).join("");
         }
 
         function renderList(announcements, filter = "") {
@@ -176,14 +199,14 @@
             document.getElementById('activeCount').textContent = activeCount;
         }
 
-        // 키워드 검색 이벤트
-        document.getElementById('searchInput').addEventListener('input', function () {
-            renderList(lastAnnouncements, this.value.trim());
+        // 키워드 드롭박스 이벤트
+        document.getElementById('keywordSelect').addEventListener('change', function () {
+            renderList(lastAnnouncements, this.value);
         });
 
         // 옵션 검색 버튼 이벤트
         document.getElementById('searchBtn').addEventListener('click', function () {
-            document.getElementById('searchInput').value = "";
+            document.getElementById('keywordSelect').value = "";
             fetchAnnouncements();
         });
 
