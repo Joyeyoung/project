@@ -15,12 +15,13 @@ module.exports = async (req, res) => {
   const params = urlObj.searchParams;
 
   // K-Startup 사업공고 오픈API 엔드포인트
-  const apiUrl = 'http://openapi.kised.or.kr/openapi/service/rest/ContentsService/getAnnouncementList';
+  const apiUrl = 'https://openapi.kised.or.kr/openapi/service/rest/ContentsService/getAnnouncementList';
 
+  const serviceKey = process.env.serviceKey;
   // 필수 파라미터: serviceKey, pageNo, numOfRows
   // 선택 파라미터: startDate, endDate
   const searchParams = new URLSearchParams();
-  if (params.get('serviceKey')) searchParams.append('serviceKey', params.get('serviceKey'));
+  searchParams.append('serviceKey', serviceKey);
   if (params.get('pageNo')) searchParams.append('pageNo', params.get('pageNo'));
   if (params.get('numOfRows')) searchParams.append('numOfRows', params.get('numOfRows'));
   if (params.get('startDate')) searchParams.append('startDate', params.get('startDate'));
