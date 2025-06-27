@@ -113,7 +113,6 @@
     </div>
     <script>
         // 실제 사업공고 API 엔드포인트와 파라미터 사용
-        const serviceKey = "olU5ff1OOtLxN2UCnd5tVK1UbLMMdvEsDGnkwLhtnCLbUuwdRSnPdLeAJeBmR7j7SBGavmXKq9da+/y+x9wa3w==";
         let lastAnnouncements = [];
         let lastKeywords = [];
 
@@ -123,15 +122,14 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-            // K-Startup 사업공고 오픈API 파라미터명에 맞게 전달
-            let apiUrl = `/api/proxy?pageNo=${pageNo}&numOfRows=${numOfRows}&serviceKey=${encodeURIComponent(serviceKey)}`;
+            // 프록시에서 인증키를 처리하므로 serviceKey 파라미터 제거
+            let apiUrl = `/api/proxy?pageNo=${pageNo}&numOfRows=${numOfRows}`;
             if (startDate) apiUrl += `&startDate=${startDate}`;
             if (endDate) apiUrl += `&endDate=${endDate}`;
 
             try {
                 const response = await fetch(apiUrl);
                 const text = await response.text();
-                console.log(text); // 응답 원본을 콘솔에 출력
                 // API가 XML로 응답할 수 있으므로 JSON 변환 시도, 실패하면 XML 파싱
                 let result;
                 try {
