@@ -97,32 +97,26 @@
         <button id="searchBtn">검색</button>
     </div>
     <div class="search-bar">
-        <label for="keywordSelect" style="font-weight:bold;margin-right:8px;">키워드:</label>
-        <select id="keywordSelect">
-            <option value="">키워드 선택...</option>
-            <option value="기술">기술</option>
-            <option value="창업">창업</option>
-            <option value="지원">지원</option>
-        </select>
+        <!-- 키워드 드롭박스 제거 -->
     </div>
     <div class="announcement-list-wrapper">
         <div id="previewList" style="margin-bottom:18px;"></div>
         <ul class="announcement-list" id="announcementList">
             <!-- 공고 리스트가 여기에 표시됩니다 -->
         </ul>
+        <div id="noDataMsg" style="display:none;color:#b00;text-align:center;margin:24px 0 8px 0;font-weight:bold;">조건에 맞는 데이터가 없습니다.</div>
     </div>
     <script>
         // 실제 사업공고 API 엔드포인트와 파라미터 사용
         let lastAnnouncements = [];
         let lastKeywords = [];
 
-        async function fetchAnnouncements(filter = "") {
+        async function fetchAnnouncements() {
             const pageNo = document.getElementById('pageNo').value || "1";
             const numOfRows = document.getElementById('numOfRows').value || "10";
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-            // 프록시에서 인증키를 처리하므로 serviceKey 파라미터 제거
             let apiUrl = `/api/proxy?pageNo=${pageNo}&numOfRows=${numOfRows}`;
             if (startDate) apiUrl += `&startDate=${startDate}`;
             if (endDate) apiUrl += `&endDate=${endDate}`;
@@ -130,7 +124,6 @@
             try {
                 const response = await fetch(apiUrl);
                 const text = await response.text();
-                // API가 XML로 응답할 수 있으므로 JSON 변환 시도, 실패하면 XML 파싱
                 let result;
                 try {
                     result = JSON.parse(text);
@@ -146,11 +139,9 @@
                         status: item.getElementsByTagName("bizPrdYn")[0]?.textContent === "Y" ? "지원중" : "마감"
                     }));
                     lastAnnouncements = announcements;
-                    updateKeywordSelect(announcements);
-                    renderList(announcements, filter);
+                    renderList(announcements);
                     return;
                 }
-
                 // JSON 구조일 경우
                 const announcements = (result.response?.body?.items?.item || []).map(item => ({
                     title: item.bizTitle || "사업명 없음",
@@ -158,39 +149,25 @@
                     keywords: [item.bizTyNm || "키워드 없음"],
                     status: item.bizPrdYn === "Y" ? "지원중" : "마감"
                 }));
-
                 lastAnnouncements = announcements;
-                updateKeywordSelect(announcements);
-                renderList(announcements, filter);
+                renderList(announcements);
             } catch (e) {
                 document.getElementById('announcementList').innerHTML = "<li>데이터를 불러오지 못했습니다.</li>";
                 document.getElementById('activeCount').textContent = 0;
             }
         }
 
-        function updateKeywordSelect(announcements) {
-            const select = document.getElementById('keywordSelect');
-            const keywords = Array.from(new Set(announcements.flatMap(a => a.keywords)));
-            lastKeywords = keywords;
-            select.innerHTML = '<option value="">키워드 선택...</option>' +
-                keywords.map(k => `<option value="${k}">${k}</option>`).join("");
-        }
-
-        function renderList(announcements, filter = "") {
+        function renderList(announcements) {
             const list = document.getElementById('announcementList');
             const preview = document.getElementById('previewList');
+            const noDataMsg = document.getElementById('noDataMsg');
             list.innerHTML = "";
             preview.innerHTML = "";
             let activeCount = 0;
-            const filtered = announcements
-                .filter(a =>
-                    filter === "" ||
-                    a.title.includes(filter) ||
-                    a.keywords.some(k => k.includes(filter))
-                )
-                .sort((a, b) => b.date.localeCompare(a.date));
+            // 최신순(날짜 내림차순) 정렬
+            const sorted = announcements.slice().sort((a, b) => b.date.localeCompare(a.date));
             // 최신 공고 2~3개 미리보기
-            const previewItems = filtered.slice(0, 3);
+            const previewItems = sorted.slice(0, 3);
             if (previewItems.length > 0) {
                 preview.innerHTML =
                     `<div style="border:2px solid #2d4a7c;background:#f7faff;padding:14px 14px 8px 14px;border-radius:8px;">
@@ -204,7 +181,12 @@
                     ).join("") +
                     `</div>`;
             }
-            filtered.forEach(a => {
+            if (sorted.length === 0) {
+                noDataMsg.style.display = "block";
+            } else {
+                noDataMsg.style.display = "none";
+            }
+            sorted.forEach(a => {
                 if (a.status === "지원중") activeCount++;
                 const li = document.createElement('li');
                 li.className = "announcement";
@@ -219,14 +201,8 @@
             document.getElementById('activeCount').textContent = activeCount;
         }
 
-        // 키워드 드롭박스 이벤트
-        document.getElementById('keywordSelect').addEventListener('change', function () {
-            renderList(lastAnnouncements, this.value);
-        });
-
         // 옵션 검색 버튼 이벤트
         document.getElementById('searchBtn').addEventListener('click', function () {
-            document.getElementById('keywordSelect').value = "";
             fetchAnnouncements();
         });
 
