@@ -106,7 +106,7 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-            // 프록시 API 엔드포인트로 변경
+            // K-Startup 사업공고 오픈API 파라미터명에 맞게 전달
             let apiUrl = `/api/proxy?pageNo=${pageNo}&numOfRows=${numOfRows}&serviceKey=${encodeURIComponent(serviceKey)}`;
             if (startDate) apiUrl += `&startDate=${startDate}`;
             if (endDate) apiUrl += `&endDate=${endDate}`;
