@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중소기업 사업 공고</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 40px;
+            background: #f7f7f7;
+        }
+
+        h1 {
+            color: #2d4a7c;
+        }
+
+        .counter {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            padding: 8px;
+            width: 250px;
+        }
+
+        .announcement-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .announcement {
+            background: #fff;
+            margin-bottom: 15px;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+        }
+
+        .announcement .title {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .announcement .date {
+            color: #888;
+            font-size: 0.95em;
+        }
+
+        .announcement .keywords {
+            margin-top: 6px;
+            color: #2d4a7c;
+            font-size: 0.95em;
+        }
+
+        .announcement .status {
+            float: right;
+            color: #fff;
+            background: #2d4a7c;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.9em;
+        }
+        .search-options {
+            margin-bottom: 20px;
+        }
+        .search-options input {
+            padding: 6px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>중소기업 사업 공고</h1>
+    <div class="counter">
+        현재 지원 중인 사업: <span id="activeCount">0</span>개
+    </div>
+    <div class="search-options">
+        <label>시작일: <input type="date" id="startDate"></label>
+        <label>종료일: <input type="date" id="endDate"></label>
+        <label>페이지: <input type="number" id="pageNo" value="1" min="1" style="width:60px"></label>
+        <label>출력수: <input type="number" id="numOfRows" value="10" min="1" max="100" style="width:60px"></label>
+        <button id="searchBtn">검색</button>
+    </div>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="키워드로 검색...">
+    </div>
+    <ul class="announcement-list" id="announcementList">
+        <!-- 공고 리스트가 여기에 표시됩니다 -->
+    </ul>
+    <script>
+        // 실제 사업공고 API 엔드포인트와 파라미터 사용
+        const serviceKey = "olU5ff1OOtLxN2UCnd5tVK1UbLMMdvEsDGnkwLhtnCLbUuwdRSnPdLeAJeBmR7j7SBGavmXKq9da+/y+x9wa3w==";
+        let lastAnnouncements = [];
+
+        async function fetchAnnouncements(filter = "") {
+            const pageNo = document.getElementById('pageNo').value || "1";
+            const numOfRows = document.getElementById('numOfRows').value || "10";
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            // 프록시 API 엔드포인트로 변경
+            let apiUrl = `/api/proxy?pageNo=${pageNo}&numOfRows=${numOfRows}&serviceKey=${encodeURIComponent(serviceKey)}`;
+            if (startDate) apiUrl += `&startDate=${startDate}`;
+            if (endDate) apiUrl += `&endDate=${endDate}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                const text = await response.text();
+                // API가 XML로 응답할 수 있으므로 JSON 변환 시도, 실패하면 XML 파싱
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch {
+                    // XML 파싱
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(text, "text/xml");
+                    const items = Array.from(xml.getElementsByTagName("item"));
+                    const announcements = items.map(item => ({
+                        title: item.getElementsByTagName("bizTitle")[0]?.textContent || "사업명 없음",
+                        date: item.getElementsByTagName("regDate")[0]?.textContent || "날짜 없음",
+                        keywords: [item.getElementsByTagName("bizTyNm")[0]?.textContent || "키워드 없음"],
+                        status: item.getElementsByTagName("bizPrdYn")[0]?.textContent === "Y" ? "지원중" : "마감"
+                    }));
+                    lastAnnouncements = announcements;
+                    renderList(announcements, filter);
+                    return;
+                }
+
+                // JSON 구조일 경우
+                const announcements = (result.response?.body?.items?.item || []).map(item => ({
+                    title: item.bizTitle || "사업명 없음",
+                    date: item.regDate || "날짜 없음",
+                    keywords: [item.bizTyNm || "키워드 없음"],
+                    status: item.bizPrdYn === "Y" ? "지원중" : "마감"
+                }));
+
+                lastAnnouncements = announcements;
+                renderList(announcements, filter);
+            } catch (e) {
+                document.getElementById('announcementList').innerHTML = "<li>데이터를 불러오지 못했습니다.</li>";
+                document.getElementById('activeCount').textContent = 0;
+            }
+        }
+
+        function renderList(announcements, filter = "") {
+            const list = document.getElementById('announcementList');
+            list.innerHTML = "";
+            let activeCount = 0;
+            announcements
+                .filter(a =>
+                    filter === "" ||
+                    a.title.includes(filter) ||
+                    a.keywords.some(k => k.includes(filter))
+                )
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .forEach(a => {
+                    if (a.status === "지원중") activeCount++;
+                    const li = document.createElement('li');
+                    li.className = "announcement";
+                    li.innerHTML = `
+                        <span class="status">${a.status}</span>
+                        <div class="title">${a.title}</div>
+                        <div class="date">${a.date}</div>
+                        <div class="keywords">키워드: ${a.keywords.join(", ")}</div>
+                    `;
+                    list.appendChild(li);
+                });
+            document.getElementById('activeCount').textContent = activeCount;
+        }
+
+        // 키워드 검색 이벤트
+        document.getElementById('searchInput').addEventListener('input', function () {
+            renderList(lastAnnouncements, this.value.trim());
+        });
+
+        // 옵션 검색 버튼 이벤트
+        document.getElementById('searchBtn').addEventListener('click', function () {
+            document.getElementById('searchInput').value = "";
+            fetchAnnouncements();
+        });
+
+        // 초기 렌더링
+        fetchAnnouncements();
+    </script>
+</body>
+</html>
