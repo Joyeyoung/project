@@ -174,7 +174,7 @@
                     previewItems.map(a =>
                         `<div style="background:#f3f6fa;padding:10px 12px;border-radius:6px;margin-bottom:8px;">
                             <span class="status">${a.status}</span>
-                            <span style="font-weight:bold;"><a href="${a.viewUrl || '#'}" target="_blank" style="color:inherit;text-decoration:underline;">${a.title}</a></span>
+                            <span style="font-weight:bold;">${a.viewUrl ? `<a href="${a.viewUrl}" target="_blank" style="color:inherit;text-decoration:underline;">${a.title}</a>` : a.title}</span>
                             <span style="color:#888;font-size:0.95em;"> (${a.date})</span>
                         </div>`
                     ).join("") +
@@ -194,9 +194,12 @@
                 html += `<li style="background:#eaf6ea;color:#217a2b;font-weight:bold;padding:8px 10px;border-radius:6px;margin-bottom:6px;">진행중 (${ongoing.length})</li>`;
                 ongoing.forEach(a => {
                     activeCount++;
+                    const titleHtml = a.viewUrl
+                        ? `<a href="${a.viewUrl}" target="_blank" style="color:inherit;text-decoration:underline;">${a.title}</a>`
+                        : `<span>${a.title}</span>`;
                     html += `<li class="announcement">
                         <span class="status">${a.status}</span>
-                        <div class="title"><a href="${a.viewUrl || '#'}" target="_blank" style="color:inherit;text-decoration:underline;">${a.title}</a></div>
+                        <div class="title">${titleHtml}</div>
                         <div class="date">${a.date}</div>
                         <div class="keywords">키워드: ${a.keywords.join(", ")}</div>
                     </li>`;
@@ -205,9 +208,12 @@
             if (closed.length > 0) {
                 html += `<li style="background:#f6eaea;color:#b00;font-weight:bold;padding:8px 10px;border-radius:6px;margin:18px 0 6px 0;">마감 (${closed.length})</li>`;
                 closed.forEach(a => {
+                    const titleHtml = a.viewUrl
+                        ? `<a href="${a.viewUrl}" target="_blank" style="color:inherit;text-decoration:underline;">${a.title}</a>`
+                        : `<span>${a.title}</span>`;
                     html += `<li class="announcement">
                         <span class="status">${a.status}</span>
-                        <div class="title"><a href="${a.viewUrl || '#'}" target="_blank" style="color:inherit;text-decoration:underline;">${a.title}</a></div>
+                        <div class="title">${titleHtml}</div>
                         <div class="date">${a.date}</div>
                         <div class="keywords">키워드: ${a.keywords.join(", ")}</div>
                     </li>`;
